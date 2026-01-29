@@ -19,7 +19,7 @@
   justify-content: space-between;
   height: var(--header-height);
   padding: 0 16px;
-  padding-left: 100px; /* macOS traffic lights 空间 - 增加间距避免重叠 */
+  padding-left: 120px; /* macOS traffic lights 空间 - 足够容纳三个按钮 */
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   -webkit-app-region: drag;
