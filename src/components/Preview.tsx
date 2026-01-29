@@ -4,15 +4,16 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import rehypeRaw from 'rehype-raw'
-import rehypeHighlight from 'rehype-highlight'
 import mermaid from 'mermaid'
+import CodeBlock from './CodeBlock'
 import '../styles/Preview.css'
 
 interface PreviewProps {
   content: string
+  isLargeFile?: boolean
 }
 
-function Preview({ content }: PreviewProps) {
+function Preview({ content, isLargeFile }: PreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -24,10 +25,9 @@ function Preview({ content }: PreviewProps) {
   }, [])
 
   useEffect(() => {
-    if (!previewRef.current) return
+    if (!previewRef.current || isLargeFile) return
 
     const mermaidBlocks = previewRef.current.querySelectorAll('.language-mermaid')
-    // 使用 AbortController 来处理异步操作的清理
     let isCancelled = false
     
     mermaidBlocks.forEach(async (block, index) => {
@@ -38,7 +38,6 @@ function Preview({ content }: PreviewProps) {
       
       try {
         const { svg } = await mermaid.render(id, code)
-        // 检查组件是否已卸载或 content 已变化
         if (isCancelled) return
         
         const wrapper = document.createElement('div')
@@ -53,7 +52,7 @@ function Preview({ content }: PreviewProps) {
     return () => {
       isCancelled = true
     }
-  }, [content])
+  }, [content, isLargeFile])
 
   if (!content) {
     return (
@@ -74,7 +73,7 @@ function Preview({ content }: PreviewProps) {
       <div className="preview-content" ref={previewRef}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeKatex, rehypeRaw, rehypeHighlight]}
+          rehypePlugins={[rehypeKatex, rehypeRaw]}
           components={{
             h1: ({ children }) => <h1 className="heading-1">{children}</h1>,
             h2: ({ children }) => <h2 className="heading-2">{children}</h2>,
@@ -105,21 +104,22 @@ function Preview({ content }: PreviewProps) {
             ),
             code: ({ className, children, ...props }) => {
               const match = /language-(\w+)/.exec(className || '')
-              const isInline = !match
-              
-              if (isInline) {
-                return <code className="inline-code" {...props}>{children}</code>
-              }
+              const language = match?.[1] || 'text'
+              const code = String(children).replace(/\n$/, '')
+              const isInline = !match && !code.includes('\n')
               
               return (
-                <code className={className} {...props}>
-                  {children}
-                </code>
+                <CodeBlock
+                  code={code}
+                  language={language}
+                  isInline={isInline}
+                />
               )
             },
-            pre: ({ children }) => (
-              <pre className="code-block">{children}</pre>
-            ),
+            pre: ({ children }) => {
+              // CodeBlock 组件已经处理了 pre 标签
+              return <>{children}</>
+            },
             blockquote: ({ children }) => (
               <blockquote className="blockquote">{children}</blockquote>
             ),
