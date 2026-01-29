@@ -7,6 +7,7 @@ let mainWindow: BrowserWindow | null = null
 const watchers: Map<string, FSWatcher> = new Map()
 
 function createWindow() {
+  // 先显示窗口再加载内容，提升感知速度
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -14,11 +15,20 @@ function createWindow() {
     minHeight: 600,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 16, y: 16 },
+    show: false, // 先隐藏，等准备好再显示
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
+      // 加速渲染
+      experimentalFeatures: true,
     },
+  })
+
+  // 窗口准备好后立即显示（感知启动速度提升）
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show()
+    mainWindow?.focus()
   })
 
   if (process.env.NODE_ENV === 'development' || !app.isPackaged) {

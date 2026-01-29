@@ -65,6 +65,11 @@
     "files": [
       "dist/**/*"
     ],
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "compression": "maximum",
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
@@ -75,7 +80,9 @@
             "arm64"
           ]
         }
-      ]
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
     },
     "win": {
       "target": [
