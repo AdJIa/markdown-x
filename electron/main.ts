@@ -14,7 +14,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 12, y: 11 }, // 调整位置避免与工具栏图标重叠
+    trafficLightPosition: { x: 10, y: 10 }, // macOS 标准位置，左上对齐
     show: false, // 先隐藏，等准备好再显示
     webPreferences: {
       nodeIntegration: false,
