@@ -10,9 +10,10 @@ interface EditorProps {
   content: string
   onChange: (content: string) => void
   filePath: string | null | undefined
+  isLoading?: boolean
 }
 
-function Editor({ content, onChange, filePath }: EditorProps) {
+function Editor({ content, onChange, filePath, isLoading }: EditorProps) {
   const { currentTheme } = useTheme()
 
   const handleChange = useCallback((value: string) => {
@@ -77,28 +78,35 @@ function Editor({ content, onChange, filePath }: EditorProps) {
   }
 
   return (
-    <div className="editor-wrapper">
-      <CodeMirror
-        value={content}
-        onChange={handleChange}
-        extensions={extensions}
-        basicSetup={{
-          lineNumbers: true,
-          highlightActiveLineGutter: true,
-          highlightActiveLine: true,
-          foldGutter: true,
-          dropCursor: true,
-          allowMultipleSelections: true,
-          indentOnInput: true,
-          bracketMatching: true,
-          closeBrackets: true,
-          autocompletion: true,
-          rectangularSelection: true,
-          crosshairCursor: false,
-          highlightSelectionMatches: true,
-        }}
-        className="code-mirror-wrapper"
-      />
+    <div className={`editor-wrapper ${isLoading ? 'loading' : ''}`}>
+      {isLoading ? (
+        <div className="editor-loading">
+          <div className="spinner" />
+          <p>正在加载文件...</p>
+        </div>
+      ) : (
+        <CodeMirror
+          value={content}
+          onChange={handleChange}
+          extensions={extensions}
+          basicSetup={{
+            lineNumbers: true,
+            highlightActiveLineGutter: true,
+            highlightActiveLine: true,
+            foldGutter: true,
+            dropCursor: true,
+            allowMultipleSelections: true,
+            indentOnInput: true,
+            bracketMatching: true,
+            closeBrackets: true,
+            autocompletion: true,
+            rectangularSelection: true,
+            crosshairCursor: false,
+            highlightSelectionMatches: true,
+          }}
+          className="code-mirror-wrapper"
+        />
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
@@ -9,6 +9,9 @@ import './styles/App.css'
 
 type ViewMode = 'editor' | 'preview' | 'split'
 
+// 文件大小阈值（1MB 以上视为大文件）
+const LARGE_FILE_THRESHOLD = 1024 * 1024
+
 function App() {
   const { currentSite } = useSites()
   const [showSiteManager, setShowSiteManager] = useState(false)
@@ -17,16 +20,28 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [isDirty, setIsDirty] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [isLargeFile, setIsLargeFile] = useState(false)
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (!currentSite) {
       setShowSiteManager(true)
     }
-    // 切换站点时清空当前编辑状态
     setCurrentFile(null)
     setContent('')
     setIsDirty(false)
   }, [currentSite])
+
+  // 清理加载超时
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleFileSelect = useCallback(async (file: FileItem) => {
     if (file.type !== 'file') return
@@ -36,8 +51,34 @@ function App() {
       if (!confirmed) return
     }
 
+    // 清除之前的超时
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current)
+    }
+
+    // 延迟显示加载状态（避免小文件闪烁）
+    loadingTimeoutRef.current = setTimeout(() => {
+      setIsLoading(true)
+      setLoadingProgress(0)
+    }, 150)
+
     try {
+      // 先检查文件大小
+      const fileStats = await window.electronAPI.getFileStats?.(file.path)
+      const fileSize = fileStats?.size || 0
+      
+      setIsLargeFile(fileSize > LARGE_FILE_THRESHOLD)
+
+      // 模拟进度更新
+      const progressInterval = setInterval(() => {
+        setLoadingProgress(prev => Math.min(prev + 10, 90))
+      }, 50)
+
       const fileContent = await window.electronAPI.readFile(file.path)
+      
+      clearInterval(progressInterval)
+      setLoadingProgress(100)
+
       if (fileContent !== null) {
         setCurrentFile(file)
         setContent(fileContent)
@@ -48,6 +89,17 @@ function App() {
     } catch (error) {
       console.error('Error reading file:', error)
       alert(`读取文件时发生错误: ${file.name}`)
+    } finally {
+      // 延迟关闭加载状态，让用户看到完成
+      setTimeout(() => {
+        setIsLoading(false)
+        setLoadingProgress(0)
+      }, 200)
+      
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+        loadingTimeoutRef.current = null
+      }
     }
   }, [isDirty, currentFile])
 
@@ -57,7 +109,6 @@ function App() {
   }, [])
 
   const handleFileDelete = useCallback((file: FileItem) => {
-    // 如果删除的是当前正在编辑的文件，清空编辑状态
     if (currentFile?.path === file.path) {
       setCurrentFile(null)
       setContent('')
@@ -111,6 +162,7 @@ function App() {
                 <span className="file-name">
                   {currentFile.name}
                   {isDirty && <span className="dirty-indicator">*</span>}
+                  {isLargeFile && <span className="large-file-badge" title="大文件">⚡</span>}
                 </span>
                 <span className="file-path">{currentFile.path}</span>
               </div>
@@ -150,7 +202,15 @@ function App() {
             </div>
           </div>
           <div className="toolbar-right">
-            {isDirty && (
+            {isLoading && (
+              <div className="loading-indicator">
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${loadingProgress}%` }} />
+                </div>
+                <span className="loading-text">{loadingProgress}%</span>
+              </div>
+            )}
+            {isDirty && !isLoading && (
               <button className="save-btn" onClick={handleSave}>
                 保存
               </button>
@@ -164,10 +224,14 @@ function App() {
               content={content}
               onChange={handleContentChange}
               filePath={currentFile?.path}
+              isLoading={isLoading}
             />
           )}
           {(viewMode === 'preview' || viewMode === 'split') && (
-            <Preview content={content} />
+            <Preview 
+              content={content} 
+              isLargeFile={isLargeFile}
+            />
           )}
         </div>
       </main>

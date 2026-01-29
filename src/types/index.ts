@@ -27,12 +27,21 @@ export interface EditorState {
   isDirty: boolean
 }
 
+export interface FileStats {
+  size: number
+  isFile: boolean
+  isDirectory: boolean
+  mtime: Date
+  birthtime: Date
+}
+
 declare global {
   interface Window {
     electronAPI: {
       selectDirectory: () => Promise<string | null>
       readDirectory: (dirPath: string) => Promise<FileItem[]>
       readFile: (filePath: string) => Promise<string | null>
+      getFileStats: (filePath: string) => Promise<FileStats | null>
       writeFile: (filePath: string, content: string) => Promise<boolean>
       createFile: (dirPath: string, fileName: string) => Promise<{ success: boolean; path?: string; error?: string }>
       createDirectory: (dirPath: string, dirName: string) => Promise<{ success: boolean; path?: string; error?: string }>

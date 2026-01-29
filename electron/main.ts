@@ -121,7 +121,24 @@ ipcMain.handle('read-directory', async (_, dirPath: string) => {
   }
 })
 
-// Read file content
+// Get file stats without reading content
+ipcMain.handle('get-file-stats', async (_, filePath: string) => {
+  try {
+    const stat = fs.statSync(filePath)
+    return {
+      size: stat.size,
+      isFile: stat.isFile(),
+      isDirectory: stat.isDirectory(),
+      mtime: stat.mtime,
+      birthtime: stat.birthtime
+    }
+  } catch (error) {
+    console.error('Error getting file stats:', error)
+    return null
+  }
+})
+
+// Read file content - 使用流式读取优化大文件性能
 ipcMain.handle('read-file', async (_, filePath: string) => {
   try {
     // 先检查文件是否存在且可访问
@@ -137,9 +154,16 @@ ipcMain.handle('read-file', async (_, filePath: string) => {
     const MAX_FILE_SIZE = 10 * 1024 * 1024
     if (stat.size > MAX_FILE_SIZE) {
       console.error(`File too large: ${filePath} (${stat.size} bytes)`)
-      return null
+      // 对于超大文件，只读取前 1000 行
+      return readFilePartial(filePath, 1000)
     }
     
+    // 对于大文件 (> 500KB)，使用流式读取
+    if (stat.size > 500 * 1024) {
+      return readFileWithStream(filePath)
+    }
+    
+    // 小文件使用同步读取
     const content = fs.readFileSync(filePath, 'utf-8')
     return content
   } catch (error) {
@@ -147,6 +171,64 @@ ipcMain.handle('read-file', async (_, filePath: string) => {
     return null
   }
 })
+
+// 流式读取文件（避免阻塞）
+async function readFileWithStream(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    const stream = fs.createReadStream(filePath, { encoding: 'utf-8' })
+    
+    stream.on('data', (chunk) => {
+      chunks.push(Buffer.from(chunk))
+    })
+    
+    stream.on('end', () => {
+      resolve(Buffer.concat(chunks).toString('utf-8'))
+    })
+    
+    stream.on('error', (error) => {
+      reject(error)
+    })
+  })
+}
+
+// 部分读取文件（超大文件）
+async function readFilePartial(filePath: string, maxLines: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stream = fs.createReadStream(filePath, { encoding: 'utf-8' })
+    let lineCount = 0
+    let content = ''
+    let remainder = ''
+    
+    stream.on('data', (chunk: string) => {
+      const lines = (remainder + chunk).split('\n')
+      remainder = lines.pop() || ''
+      
+      for (const line of lines) {
+        if (lineCount < maxLines) {
+          content += line + '\n'
+          lineCount++
+        } else {
+          stream.destroy()
+          content += '\n\n[文件过大，仅显示前 ' + maxLines + ' 行...]'
+          resolve(content)
+          return
+        }
+      }
+    })
+    
+    stream.on('end', () => {
+      if (remainder && lineCount < maxLines) {
+        content += remainder
+      }
+      resolve(content)
+    })
+    
+    stream.on('error', (error) => {
+      reject(error)
+    })
+  })
+}
 
 // Write file content
 ipcMain.handle('write-file', async (_, filePath: string, content: string) => {
