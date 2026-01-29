@@ -1,6 +1,6 @@
 {
   "name": "markdown-x",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A powerful Markdown reading and editing application",
   "main": "dist/main/main.js",
   "scripts": {
