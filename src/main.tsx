@@ -3,14 +3,23 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SiteProvider } from './contexts/SiteContext'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles/index.css'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')
+
+if (!rootElement) {
+  throw new Error('Root element not found. Please check your HTML file.')
+}
+
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <SiteProvider>
-        <App />
-      </SiteProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <SiteProvider>
+          <App />
+        </SiteProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 )

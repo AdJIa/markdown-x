@@ -3,8 +3,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import rehypeRaw from 'rehype-raw'
 import mermaid from 'mermaid'
+import DOMPurify from 'dompurify'
 import CodeBlock from './CodeBlock'
 import '../styles/Preview.css'
 
@@ -20,37 +20,48 @@ function Preview({ content, isLargeFile }: PreviewProps) {
     mermaid.initialize({
       startOnLoad: false,
       theme: 'dark',
-      securityLevel: 'loose',
+      securityLevel: 'strict',
     })
   }, [])
 
   useEffect(() => {
     if (!previewRef.current || isLargeFile) return
 
-    const mermaidBlocks = previewRef.current.querySelectorAll('.language-mermaid')
-    let isCancelled = false
+    const abortController = new AbortController()
+    const { signal } = abortController
+    const contentRef = { current: content }
     
-    mermaidBlocks.forEach(async (block, index) => {
-      const code = block.textContent || ''
-      if (!code.trim()) return
-      
-      const id = `mermaid-${index}-${Date.now()}`
-      
-      try {
-        const { svg } = await mermaid.render(id, code)
-        if (isCancelled) return
+    const mermaidBlocks = previewRef.current.querySelectorAll('.language-mermaid')
+    
+    const renderMermaid = async () => {
+      for (let i = 0; i < mermaidBlocks.length; i++) {
+        if (signal.aborted) return
         
-        const wrapper = document.createElement('div')
-        wrapper.className = 'mermaid-diagram'
-        wrapper.innerHTML = svg
-        block.parentElement?.replaceWith(wrapper)
-      } catch (e) {
-        console.error('Mermaid rendering error:', e)
+        const block = mermaidBlocks[i]
+        const code = block.textContent || ''
+        if (!code.trim()) continue
+        
+        const id = `mermaid-${i}-${Date.now()}`
+        
+        try {
+          const { svg } = await mermaid.render(id, code)
+          
+          if (signal.aborted || contentRef.current !== content) return
+          
+          const wrapper = document.createElement('div')
+          wrapper.className = 'mermaid-diagram'
+          wrapper.innerHTML = DOMPurify.sanitize(svg)
+          block.parentElement?.replaceWith(wrapper)
+        } catch (e) {
+          console.error('Mermaid rendering error:', e)
+        }
       }
-    })
+    }
+    
+    renderMermaid()
     
     return () => {
-      isCancelled = true
+      abortController.abort()
     }
   }, [content, isLargeFile])
 
@@ -73,7 +84,7 @@ function Preview({ content, isLargeFile }: PreviewProps) {
       <div className="preview-content" ref={previewRef}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeKatex, rehypeRaw]}
+          rehypePlugins={[rehypeKatex]}
           components={{
             h1: ({ children }) => <h1 className="heading-1">{children}</h1>,
             h2: ({ children }) => <h2 className="heading-2">{children}</h2>,
@@ -102,7 +113,7 @@ function Preview({ content, isLargeFile }: PreviewProps) {
                 <table>{children}</table>
               </div>
             ),
-            code: ({ className, children, ...props }) => {
+            code: ({ className, children }) => {
               const match = /language-(\w+)/.exec(className || '')
               const language = match?.[1] || 'text'
               const code = String(children).replace(/\n$/, '')

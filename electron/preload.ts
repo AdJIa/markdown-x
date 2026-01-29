@@ -1,5 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+// 存储回调引用以便精确移除
+const listeners = new Map<string, (...args: any[]) => void>()
+
 contextBridge.exposeInMainWorld('electronAPI', {
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
   readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath),
@@ -16,9 +19,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppPath: () => ipcRenderer.invoke('get-app-path'),
   pathExists: (path: string) => ipcRenderer.invoke('path-exists', path),
   onDirectoryChanged: (callback: (data: { event: string; path: string }) => void) => {
-    ipcRenderer.on('directory-changed', (_, data) => callback(data))
+    // 移除旧监听器避免重复
+    const oldCallback = listeners.get('directory-changed')
+    if (oldCallback) {
+      ipcRenderer.removeListener('directory-changed', oldCallback)
+    }
+    
+    // 包装回调以存储引用
+    const wrappedCallback = (_: any, data: { event: string; path: string }) => callback(data)
+    listeners.set('directory-changed', wrappedCallback)
+    ipcRenderer.on('directory-changed', wrappedCallback)
   },
   removeDirectoryChangedListener: () => {
-    ipcRenderer.removeAllListeners('directory-changed')
+    const wrappedCallback = listeners.get('directory-changed')
+    if (wrappedCallback) {
+      ipcRenderer.removeListener('directory-changed', wrappedCallback)
+      listeners.delete('directory-changed')
+    }
   },
 })

@@ -200,8 +200,9 @@ async function readFilePartial(filePath: string, maxLines: number): Promise<stri
     let content = ''
     let remainder = ''
     
-    stream.on('data', (chunk: string) => {
-      const lines = (remainder + chunk).split('\n')
+    stream.on('data', (chunk: string | Buffer) => {
+      const chunkStr = chunk.toString()
+      const lines = (remainder + chunkStr).split('\n')
       remainder = lines.pop() || ''
       
       for (const line of lines) {
@@ -272,6 +273,12 @@ ipcMain.handle('create-directory', async (_, dirPath: string, dirName: string) =
 // Delete file or directory
 ipcMain.handle('delete-item', async (_, itemPath: string) => {
   try {
+    // 防止删除根目录或关键系统目录
+    const blockedPaths = ['/', '/home', '/Users', 'C:\\', 'C:\\Windows']
+    if (blockedPaths.includes(itemPath) || itemPath.length < 4) {
+      return { success: false, error: 'Cannot delete system directories' }
+    }
+    
     const stat = fs.statSync(itemPath)
     if (stat.isDirectory()) {
       fs.rmSync(itemPath, { recursive: true })
@@ -334,8 +341,22 @@ ipcMain.handle('unwatch-directory', async (_, dirPath: string) => {
   return true
 })
 
+// 安全的 URL 验证函数
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 // Open external link
 ipcMain.handle('open-external', async (_, url: string) => {
+  if (!isSafeUrl(url)) {
+    console.error(`Blocked unsafe URL: ${url}`)
+    return
+  }
   await shell.openExternal(url)
 })
 
