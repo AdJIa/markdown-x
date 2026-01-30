@@ -122,6 +122,35 @@
   background: var(--accent-hover);
 }
 
+/* Outline Toggle Button */
+.outline-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.outline-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.outline-toggle-btn.active {
+  color: var(--accent-primary);
+  background: var(--bg-tertiary);
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Editor Container */
 .editor-container {
   flex: 1;

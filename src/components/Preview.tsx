@@ -86,12 +86,12 @@ function Preview({ content, isLargeFile }: PreviewProps) {
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex]}
           components={{
-            h1: ({ children }) => <h1 className="heading-1">{children}</h1>,
-            h2: ({ children }) => <h2 className="heading-2">{children}</h2>,
-            h3: ({ children }) => <h3 className="heading-3">{children}</h3>,
-            h4: ({ children }) => <h4 className="heading-4">{children}</h4>,
-            h5: ({ children }) => <h5 className="heading-5">{children}</h5>,
-            h6: ({ children }) => <h6 className="heading-6">{children}</h6>,
+            h1: ({ children }) => <h1 className="heading-1" id={`h-${String(children).replace(/\s+/g, '-').toLowerCase().slice(0, 30)}`}>{children}</h1>,
+            h2: ({ children }) => <h2 className="heading-2" id={`h-${String(children).replace(/\s+/g, '-').toLowerCase().slice(0, 30)}`}>{children}</h2>,
+            h3: ({ children }) => <h3 className="heading-3" id={`h-${String(children).replace(/\s+/g, '-').toLowerCase().slice(0, 30)}`}>{children}</h3>,
+            h4: ({ children }) => <h4 className="heading-4" id={`h-${String(children).replace(/\s+/g, '-').toLowerCase().slice(0, 30)}`}>{children}</h4>,
+            h5: ({ children }) => <h5 className="heading-5" id={`h-${String(children).replace(/\s+/g, '-').toLowerCase().slice(0, 30)}`}>{children}</h5>,
+            h6: ({ children }) => <h6 className="heading-6" id={`h-${String(children).replace(/\s+/g, '-').toLowerCase().slice(0, 30)}`}>{children}</h6>,
             a: ({ href, children }) => (
               <a
                 href={href}

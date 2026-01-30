@@ -1,0 +1,32 @@
+.word-count-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  height: 32px;
+}
+
+.word-count-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.word-count-label {
+  color: var(--text-muted);
+}
+
+.word-count-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.word-count-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border-color);
+}

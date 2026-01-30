@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import SiteManager from './components/SiteManager'
+import Outline from './components/Outline'
+import WordCount from './components/WordCount'
 import { useSites } from './contexts/SiteContext'
 import { FileItem } from './types'
 import './styles/App.css'
@@ -23,6 +25,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [isLargeFile, setIsLargeFile] = useState(false)
+  const [showOutline, setShowOutline] = useState(true)
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -202,6 +205,17 @@ function App() {
             </div>
           </div>
           <div className="toolbar-right">
+            {currentFile && (
+              <button
+                className={`outline-toggle-btn ${showOutline ? 'active' : ''}`}
+                onClick={() => setShowOutline(!showOutline)}
+                title="切换大纲"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 6h16M4 12h16M4 18h7"/>
+                </svg>
+              </button>
+            )}
             {isLoading && (
               <div className="loading-indicator">
                 <div className="progress-bar">
@@ -218,22 +232,26 @@ function App() {
           </div>
         </header>
 
-        <div className={`editor-container ${viewMode}`}>
-          {(viewMode === 'editor' || viewMode === 'split') && (
-            <Editor
-              content={content}
-              onChange={handleContentChange}
-              filePath={currentFile?.path}
-              isLoading={isLoading}
-            />
-          )}
-          {(viewMode === 'preview' || viewMode === 'split') && (
-            <Preview 
-              content={content} 
-              isLargeFile={isLargeFile}
-            />
-          )}
+        <div className="content-area">
+          <div className={`editor-container ${viewMode}`}>
+            {(viewMode === 'editor' || viewMode === 'split') && (
+              <Editor
+                content={content}
+                onChange={handleContentChange}
+                filePath={currentFile?.path}
+                isLoading={isLoading}
+              />
+            )}
+            {(viewMode === 'preview' || viewMode === 'split') && (
+              <Preview 
+                content={content} 
+                isLargeFile={isLargeFile}
+              />
+            )}
+          </div>
+          <Outline content={content} visible={showOutline && !!currentFile} />
         </div>
+        <WordCount content={content} />
       </main>
 
       {showSiteManager && (
