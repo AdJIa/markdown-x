@@ -2,7 +2,7 @@
  * 历史记录管理器
  */
 import Store from 'electron-store'
-import type { SearchHistoryItem } from '../../src/types/search'
+import type { SearchHistoryItem } from '../types/search'
 
 interface HistoryStore {
   searchHistory: SearchHistoryItem[]

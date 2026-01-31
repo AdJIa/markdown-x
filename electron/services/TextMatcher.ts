@@ -1,7 +1,7 @@
 /**
  * 文本匹配器 - 匹配关键词并提取预览
  */
-import type { MatchResult } from '../../src/types/search'
+import type { MatchResult } from '../types/search'
 
 export class TextMatcher {
   /**

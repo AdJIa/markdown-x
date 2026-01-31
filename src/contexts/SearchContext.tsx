@@ -6,9 +6,15 @@ import type {
   SearchState, 
   SearchContextValue, 
   SearchRequest,
-  SearchProgress
+  SearchProgress,
+  SearchError
 } from '../types/search'
-import { SearchErrorCode } from '../types/search'
+
+// 使用常量代替 enum 避免 vite 构建问题
+const ErrorCode = {
+  INVALID_KEYWORD: 'INVALID_KEYWORD',
+  UNKNOWN: 'UNKNOWN'
+} as const
 
 type SearchAction =
   | { type: 'SET_KEYWORD'; payload: string }
@@ -112,7 +118,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
     if (!state.keyword || state.keyword.length < 2) {
       dispatch({ 
         type: 'SET_ERROR', 
-        payload: { code: SearchErrorCode.INVALID_KEYWORD, message: '关键词至少需要 2 个字符' }
+        payload: { code: ErrorCode.INVALID_KEYWORD as SearchError['code'], message: '关键词至少需要 2 个字符' }
       })
       return
     }
@@ -138,7 +144,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       dispatch({ 
         type: 'SET_ERROR', 
         payload: { 
-          code: SearchErrorCode.UNKNOWN, 
+          code: ErrorCode.UNKNOWN as SearchError['code'], 
           message: error instanceof Error ? error.message : '搜索失败'
         }
       })

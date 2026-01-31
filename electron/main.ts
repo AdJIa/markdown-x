@@ -382,7 +382,7 @@ ipcMain.handle('path-exists', async (_, checkPath: string) => {
 
 // ========== 搜索功能 IPC 处理器 ==========
 import { SearchService } from './services/SearchService'
-import type { SearchRequest, SearchHistoryItem } from '../src/types/search'
+import type { SearchRequest, SearchHistoryItem, Site } from './types/search'
 
 const searchService = new SearchService()
 
@@ -391,7 +391,7 @@ ipcMain.handle('search:query', async (_, request: SearchRequest) => {
   try {
     // 这里需要获取站点列表，暂时从某个地方获取
     // 实际项目中应该从 SiteContext 或配置中读取
-    const sites = [] // TODO: 从应用状态获取站点列表
+    const sites: Site[] = [] // TODO: 从应用状态获取站点列表
     return await searchService.search(request, sites)
   } catch (error) {
     console.error('Search error:', error)

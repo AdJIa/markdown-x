@@ -3,7 +3,7 @@
  */
 import { promises as fs } from 'fs'
 import path from 'path'
-import type { Site } from '../../src/types'
+import type { Site } from '../types/search'
 
 export class FileScanner {
   private excludePatterns = [

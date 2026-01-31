@@ -38,11 +38,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   // 搜索相关 API
-  searchQuery: (request) => ipcRenderer.invoke('search:query', request),
+  searchQuery: (request: { keyword: string; siteIds?: string[]; maxResults?: number }) => ipcRenderer.invoke('search:query', request),
   searchCancel: () => ipcRenderer.send('search:cancel'),
   searchGetHistory: () => ipcRenderer.invoke('search:getHistory'),
-  searchSaveToHistory: (item) => ipcRenderer.invoke('search:saveToHistory', item),
-  onSearchProgress: (callback) => {
+  searchSaveToHistory: (item: { keyword: string; timestamp: number; resultCount: number }) => ipcRenderer.invoke('search:saveToHistory', item),
+  onSearchProgress: (callback: (progress: { searchedFiles: number; totalFiles: number }) => void) => {
     const wrappedCallback = (_: any, progress: { searchedFiles: number; totalFiles: number }) => callback(progress)
     listeners.set('search:progress', wrappedCallback)
     ipcRenderer.on('search:progress', wrappedCallback)

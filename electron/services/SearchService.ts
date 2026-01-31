@@ -11,7 +11,7 @@ import type {
   SearchResult, 
   SearchHistoryItem,
   Site
-} from '../../src/types/search'
+} from '../types/search'
 
 export class SearchService {
   private fileScanner: FileScanner

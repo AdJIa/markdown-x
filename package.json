@@ -1,6 +1,6 @@
 {
   "name": "markdown-x",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A powerful Markdown reading and editing application",
   "main": "dist/main/main.js",
   "scripts": {
@@ -75,6 +75,13 @@
       "target": [
         {
           "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
           "arch": [
             "x64",
             "arm64"
