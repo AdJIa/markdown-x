@@ -5,7 +5,9 @@ import Preview from './components/Preview'
 import SiteManager from './components/SiteManager'
 import Outline from './components/Outline'
 import WordCount from './components/WordCount'
+import { SearchPanel } from './components/SearchPanel'
 import { useSites } from './contexts/SiteContext'
+import { useSearch } from './contexts/SearchContext'
 import { FileItem } from './types'
 import './styles/App.css'
 
@@ -16,6 +18,7 @@ const LARGE_FILE_THRESHOLD = 1024 * 1024
 
 function App() {
   const { currentSite } = useSites()
+  const { openSearch } = useSearch()
   const [showSiteManager, setShowSiteManager] = useState(false)
   const [currentFile, setCurrentFile] = useState<FileItem | null>(null)
   const [content, setContent] = useState('')
@@ -45,6 +48,18 @@ function App() {
       }
     }
   }, [])
+
+  // 搜索快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault()
+        openSearch()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [openSearch])
 
   const handleFileSelect = useCallback(async (file: FileItem) => {
     if (file.type !== 'file') return
@@ -205,6 +220,16 @@ function App() {
             </div>
           </div>
           <div className="toolbar-right">
+            <button
+              className="view-mode-btn"
+              onClick={openSearch}
+              title="搜索 (Ctrl+Shift+F)"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+            </button>
             {currentFile && (
               <button
                 className={`outline-toggle-btn ${showOutline ? 'active' : ''}`}
@@ -257,6 +282,8 @@ function App() {
       {showSiteManager && (
         <SiteManager onClose={() => setShowSiteManager(false)} />
       )}
+
+      <SearchPanel />
     </div>
   )
 }

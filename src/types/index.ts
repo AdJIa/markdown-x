@@ -35,6 +35,8 @@ export interface FileStats {
   birthtime: Date
 }
 
+export * from './search'
+
 declare global {
   interface Window {
     electronAPI: {
@@ -54,6 +56,16 @@ declare global {
       pathExists: (path: string) => Promise<boolean>
       onDirectoryChanged: (callback: (data: { event: string; path: string }) => void) => void
       removeDirectoryChangedListener: () => void
+      /** 执行搜索查询 */
+      searchQuery: (request: import('./search').SearchRequest) => Promise<import('./search').SearchResponse>
+      /** 取消当前搜索 */
+      searchCancel: () => void
+      /** 获取搜索历史 */
+      searchGetHistory: () => Promise<import('./search').SearchHistoryItem[]>
+      /** 保存搜索历史 */
+      searchSaveToHistory: (item: Omit<import('./search').SearchHistoryItem, 'id'>) => Promise<void>
+      /** 监听搜索进度 */
+      onSearchProgress: (callback: (progress: import('./search').SearchProgress) => void) => () => void
     }
   }
 }

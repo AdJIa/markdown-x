@@ -379,3 +379,46 @@ ipcMain.handle('get-app-path', async () => {
 ipcMain.handle('path-exists', async (_, checkPath: string) => {
   return fs.existsSync(checkPath)
 })
+
+// ========== 搜索功能 IPC 处理器 ==========
+import { SearchService } from './services/SearchService'
+import type { SearchRequest, SearchHistoryItem } from '../src/types/search'
+
+const searchService = new SearchService()
+
+// 搜索查询
+ipcMain.handle('search:query', async (_, request: SearchRequest) => {
+  try {
+    // 这里需要获取站点列表，暂时从某个地方获取
+    // 实际项目中应该从 SiteContext 或配置中读取
+    const sites = [] // TODO: 从应用状态获取站点列表
+    return await searchService.search(request, sites)
+  } catch (error) {
+    console.error('Search error:', error)
+    throw error
+  }
+})
+
+// 取消搜索
+ipcMain.on('search:cancel', () => {
+  searchService.cancel()
+})
+
+// 获取搜索历史
+ipcMain.handle('search:getHistory', async () => {
+  return searchService.getHistory()
+})
+
+// 保存搜索历史
+ipcMain.handle('search:saveToHistory', async (_, item: Omit<SearchHistoryItem, 'id'>) => {
+  // 这里实际上不需要单独保存，searchQuery 已经会保存
+  // 但为了 API 完整性保留
+  return true
+})
+
+// 监听搜索进度并发送给渲染进程
+searchService.onProgress((searched, total) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('search:progress', { searchedFiles: searched, totalFiles: total })
+  }
+})

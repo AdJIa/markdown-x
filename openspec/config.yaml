@@ -1,20 +1,298 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# OpenSpec SDD (Spec-Driven Development) 完整流程配置
+# 遵循上游优先原则，每一步都需审查通过后再进入下一步
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+context: |
+  ## 项目概述
+  Markdown-X 是一款基于 Electron 的本地 Markdown 阅读和编辑器桌面应用。
+  
+  ## 技术栈
+  - **框架**: Electron 30 + React 18 + TypeScript 5
+  - **构建**: Vite 5 + electron-builder
+  - **编辑器**: CodeMirror 6
+  - **渲染**: react-markdown + remark-gfm + KaTeX + Mermaid
+  
+  ## 开发规范
+  - 所有代码必须是 TypeScript，禁止隐式 any
+  - IPC 通信必须通过 preload.ts 定义
+  - 使用 React Context 管理状态
+  - CSS 变量管理主题，支持深色/浅色
+  - Conventional Commits 提交规范
+
+# SDD 阶段定义 - 严格按顺序执行，上游优先
+phases:
+  # ============================================
+  # Phase 0: EXPLORE - 探索模式
+  # ============================================
+  # 目标: 充分理解问题空间，不做任何假设
+  # 输出: explore-report.md
+  # 
+  # 关键问题:
+  # - WHY: 为什么要解决这个问题？痛点是什么？
+  # - WHO: 为谁解决这个问题？用户是谁？
+  # - WHAT: 问题的边界在哪里？包含什么，不包含什么？
+  # - CONTEXT: 相关系统/模块有哪些？依赖关系？
+  # - CONSTRAINTS: 技术/业务/时间限制？
+  # ============================================
+  explore:
+    description: "探索问题空间，理解 WHY/WHO/WHAT/CONTEXT/CONSTRAINTS"
+    input: "用户原始需求或问题描述"
+    output: ".openspec/explore/{timestamp}-{feature}-report.md"
+    review_required: true
+    criteria:
+      - 问题定义清晰
+      - 用户场景明确
+      - 边界范围清楚
+      - 约束条件列出
+      - 相关系统识别
+  
+  # ============================================
+  # Phase 1: PROPOSAL - 提案阶段
+  # ============================================
+  # 目标: 定义 WHAT - 要做什么，不描述怎么做
+  # 输出: proposal.md
+  #
+  # 内容要求:
+  # - 基于探索报告
+  # - 明确价值主张
+  # - 功能范围定义
+  # - 成功指标
+  # - 初步风险评估
+  # ============================================
+  proposal:
+    description: "定义 WHAT - 提案要解决的问题和价值主张"
+    input: "探索报告 explore-report.md"
+    output: ".openspec/proposals/{timestamp}-{feature}.md"
+    review_required: true
+    criteria:
+      - 引用探索报告的发现
+      - 明确的价值主张（WHY）
+      - 清晰的功能范围（WHAT）
+      - 可衡量的成功指标
+      - 已识别的风险
+  
+  # ============================================
+  # Phase 2: SPEC - 规格细化阶段
+  # ============================================
+  # 目标: 详细规格说明，回答 HOW 的问题
+  # 输出: spec.md
+  #
+  # 内容要求:
+  # - 功能规格详细描述
+  # - 用户交互流程
+  # - 数据结构定义
+  # - API 接口定义
+  # - 错误处理规格
+  # - 性能规格
+  # ============================================
+  spec:
+    description: "详细规格说明 - HOW 的技术规格"
+    input: "通过的提案 proposal.md"
+    output: ".openspec/specs/{timestamp}-{feature}-spec.md"
+    review_required: true
+    criteria:
+      - 功能规格完整
+      - 数据结构定义
+      - 接口契约明确
+      - 错误场景覆盖
+      - 性能要求量化
+      - 测试验收标准
+  
+  # ============================================
+  # Phase 3: DESIGN - 设计方案阶段
+  # ============================================
+  # 目标: 技术设计方案，架构决策
+  # 输出: design.md
+  #
+  # 内容要求:
+  # - 架构设计
+  # - 模块划分
+  # - 关键算法/流程
+  # - 技术选型理由
+  # - 风险缓解方案
+  # ============================================
+  design:
+    description: "技术设计方案 - 架构和实现策略"
+    input: "通过的规格 spec.md"
+    output: ".openspec/designs/{timestamp}-{feature}-design.md"
+    review_required: true
+    criteria:
+      - 架构图/流程图
+      - 模块职责清晰
+      - 技术选型有依据
+      - 关键算法描述
+      - 风险有应对方案
+  
+  # ============================================
+  # Phase 4: TASKS - 任务拆分阶段
+  # ============================================
+  # 目标: 将设计拆分为可执行的原子任务
+  # 输出: tasks/*.md
+  #
+  # 内容要求:
+  # - 任务足够小（30min-2h）
+  # - 依赖关系明确
+  # - 验收标准清晰
+  # - 文件变更明确
+  # ============================================
+  tasks:
+    description: "任务拆分 - 可执行的原子任务"
+    input: "通过的设计 design.md"
+    output: ".openspec/tasks/{timestamp}-{feature}-{n}-{desc}.md"
+    review_required: true
+    criteria:
+      - 任务粒度合适
+      - 依赖关系清晰
+      - 验收标准可测试
+      - 文件路径明确
+  
+  # ============================================
+  # Phase 5: APPLY - 实现阶段
+  # ============================================
+  # 目标: 编码实现任务
+  # 输出: 代码 + 测试
+  #
+  # 要求:
+  # - 严格按任务描述实现
+  # - 必须包含测试
+  # - 代码审查通过
+  # ============================================
+  apply:
+    description: "编码实现 - 严格按任务执行"
+    input: "通过的任务列表"
+    output: "代码变更 + 测试代码"
+    review_required: true
+    criteria:
+      - 实现符合设计
+      - 代码规范通过
+      - 单元测试覆盖
+      - 类型检查通过
+  
+  # ============================================
+  # Phase 6: TEST - 测试验收阶段
+  # ============================================
+  # 目标: 全面测试验证
+  # 输出: test-report.md
+  #
+  # 测试类型:
+  # - 单元测试
+  # - 集成测试
+  # - 端到端测试
+  # - 性能测试
+  # - 用户验收测试
+  # ============================================
+  test:
+    description: "全面测试 - 验证实现正确性"
+    input: "实现完成的代码"
+    output: ".openspec/test-reports/{timestamp}-{feature}-test-report.md"
+    review_required: true
+    criteria:
+      - 单元测试通过
+      - 集成测试通过
+      - 规格要求验证
+      - 性能指标达标
+      - 无已知严重 bug
+  
+  # ============================================
+  # Phase 7: ARCHIVE - 归档阶段
+  # ============================================
+  # 目标: 项目归档，知识沉淀
+  # 输出: 归档文档
+  #
+  # 内容:
+  # - 最终报告
+  # - 经验教训
+  # - 相关文档链接
+  # ============================================
+  archive:
+    description: "项目归档 - 知识沉淀"
+    input: "通过的测试报告"
+    output: ".openspec/archive/{timestamp}-{feature}/"
+    review_required: false
+    criteria:
+      - 所有文档归档
+      - 经验教训总结
+      - 后续改进建议
+
+# 审查规则 - 上游优先原则
+review_rules:
+  upstream_first: true  # 必须先审查上游阶段，才能审查下游
+  checklists:
+    - 是否引用了上游阶段的输出？
+    - 是否满足阶段退出标准？
+    - 是否有未解决的风险？
+    - 是否可追溯到原始需求？
+
+# 命令快捷方式
+commands:
+  # 开始探索一个新需求
+  explore: |
+    请为 markdown-x 项目启动探索模式：
+    1. 在 .openspec/explore/ 创建探索报告
+    2. 深入分析 WHY/WHO/WHAT/CONTEXT/CONSTRAINTS
+    3. 与现有系统对比，识别依赖和影响范围
+    4. 输出 explore-report.md
+  
+  # 基于探索报告创建提案
+  propose: |
+    请基于探索报告创建正式提案：
+    1. 读取 .openspec/explore/ 下的探索报告
+    2. 在 .openspec/proposals/ 创建提案文档
+    3. 明确价值主张、功能范围、成功指标
+    4. 等待审查通过后再进入下一阶段
+  
+  # 基于提案创建规格
+  spec: |
+    请基于通过的提案创建详细规格：
+    1. 读取提案文档
+    2. 在 .openspec/specs/ 创建规格文档
+    3. 定义数据结构、接口、错误处理、性能要求
+    4. 等待审查通过
+  
+  # 基于规格创建设计
+  design: |
+    请基于通过的规格创建设计方案：
+    1. 读取规格文档
+    2. 在 .openspec/designs/ 创建设计文档
+    3. 包含架构图、模块划分、技术选型
+    4. 等待审查通过
+  
+  # 基于设计拆分任务
+  plan: |
+    请基于通过的设计拆分任务：
+    1. 读取设计文档
+    2. 在 .openspec/tasks/ 创建原子任务
+    3. 每个任务 30min-2h，有明确验收标准
+    4. 标记任务依赖关系
+  
+  # 执行下一个任务
+  next: |
+    请执行下一个待完成任务：
+    1. 读取 .openspec/tasks/ 下的任务
+    2. 严格按照任务描述实现
+    3. 包含单元测试
+    4. 完成后更新任务状态
+  
+  # 审查当前阶段
+  review: |
+    请审查当前阶段文档：
+    1. 检查是否满足阶段退出标准
+    2. 验证与上游阶段的追溯性
+    3. 提出改进意见或批准通过
+  
+  # 执行测试
+  test: |
+    请执行全面测试：
+    1. 运行单元测试
+    2. 验证规格要求的实现
+    3. 检查性能指标
+    4. 生成测试报告
+  
+  # 归档项目
+  archive: |
+    请归档已完成的项目：
+    1. 收集所有阶段文档
+    2. 总结经验教训
+    3. 移动到 .openspec/archive/
+    4. 更新项目文档

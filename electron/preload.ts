@@ -37,4 +37,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
       listeners.delete('directory-changed')
     }
   },
+  // 搜索相关 API
+  searchQuery: (request) => ipcRenderer.invoke('search:query', request),
+  searchCancel: () => ipcRenderer.send('search:cancel'),
+  searchGetHistory: () => ipcRenderer.invoke('search:getHistory'),
+  searchSaveToHistory: (item) => ipcRenderer.invoke('search:saveToHistory', item),
+  onSearchProgress: (callback) => {
+    const wrappedCallback = (_: any, progress: { searchedFiles: number; totalFiles: number }) => callback(progress)
+    listeners.set('search:progress', wrappedCallback)
+    ipcRenderer.on('search:progress', wrappedCallback)
+    return () => {
+      ipcRenderer.removeListener('search:progress', wrappedCallback)
+      listeners.delete('search:progress')
+    }
+  },
+  removeSearchProgressListener: () => {
+    const wrappedCallback = listeners.get('search:progress')
+    if (wrappedCallback) {
+      ipcRenderer.removeListener('search:progress', wrappedCallback)
+      listeners.delete('search:progress')
+    }
+  },
 })
